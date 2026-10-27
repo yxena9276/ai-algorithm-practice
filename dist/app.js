@@ -708,6 +708,9 @@ const els = {
   solutionCode: document.querySelector("#solutionCode"),
   codeEditor: document.querySelector("#codeEditor"),
   editorFilename: document.querySelector("#editorFilename"),
+  editorModeBtn: document.querySelector("#editorModeBtn"),
+  editorModeIcon: document.querySelector("#editorModeIcon"),
+  editorModeText: document.querySelector("#editorModeText"),
   runBtn: document.querySelector("#runBtn"),
   resetCodeBtn: document.querySelector("#resetCodeBtn"),
   consoleState: document.querySelector("#consoleState"),
@@ -728,6 +731,7 @@ const els = {
 
 const STORAGE_KEY = "algo-stairs-state-v2";
 const THEME_KEY = "algo-stairs-theme";
+const EDITOR_MODE_KEY = "algo-stairs-editor-mode";
 const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
 const state = {
   challengeIndex: Number.isInteger(saved.challengeIndex) ? saved.challengeIndex : 0,
@@ -740,6 +744,7 @@ const state = {
 let pyodideInstance = null;
 let pythonLoading = null;
 let saveTimer = null;
+let smartEditor = null;
 
 function renderThemeToggle() {
   const isLight = document.documentElement.dataset.theme === "light";
@@ -747,6 +752,110 @@ function renderThemeToggle() {
   els.themeToggleIcon.textContent = isLight ? "☾" : "☀";
   els.themeToggleText.textContent = isLight ? "深色模式" : "浅色模式";
   els.themeToggleBtn.setAttribute("aria-label", isLight ? "切换到深色模式" : "切换到浅色模式");
+}
+
+function getEditorValue() {
+  return smartEditor ? smartEditor.getValue() : els.codeEditor.value;
+}
+
+function setEditorValue(value) {
+  if (smartEditor) {
+    smartEditor.setValue(value);
+    smartEditor.clearHistory();
+    return;
+  }
+  els.codeEditor.value = value;
+}
+
+function queueEditorSave() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(persistEditor, 300);
+}
+
+function renderEditorModeToggle() {
+  const isSmart = Boolean(smartEditor);
+  els.editorModeBtn.setAttribute("aria-pressed", String(isSmart));
+  els.editorModeIcon.textContent = isSmart ? "⌨" : "✦";
+  els.editorModeText.textContent = isSmart ? "笔试模式" : "智能编辑";
+  els.editorModeBtn.setAttribute(
+    "aria-label",
+    isSmart ? "切换到无辅助的笔试模式" : "切换到带语法高亮和自动缩进的智能编辑模式",
+  );
+  els.editorModeBtn.title = isSmart
+    ? "关闭编辑辅助，模拟笔试输入体验"
+    : "开启语法高亮、自动缩进和括号补全";
+}
+
+function saveEditorMode(mode) {
+  try {
+    localStorage.setItem(EDITOR_MODE_KEY, mode);
+  } catch {
+    // Storage may be unavailable; the current editor mode can still change.
+  }
+}
+
+function enableSmartEditor({ persistChoice = true, focus = true } = {}) {
+  if (smartEditor) return true;
+
+  if (!globalThis.CodeMirror) {
+    els.consoleState.textContent = "智能编辑器加载失败";
+    els.consoleState.className = "error";
+    els.consoleOutput.textContent = "无法加载智能编辑器组件，已继续使用笔试模式。请检查网络后刷新页面重试。";
+    renderEditorModeToggle();
+    return false;
+  }
+
+  smartEditor = globalThis.CodeMirror.fromTextArea(els.codeEditor, {
+    mode: "python",
+    theme: "algo",
+    lineNumbers: true,
+    indentUnit: 4,
+    tabSize: 4,
+    indentWithTabs: false,
+    lineWrapping: false,
+    autoCloseBrackets: true,
+    matchBrackets: true,
+    styleActiveLine: true,
+    extraKeys: {
+      Tab(editor) {
+        if (editor.somethingSelected()) {
+          editor.indentSelection("add");
+        } else {
+          editor.replaceSelection("    ", "end", "+input");
+        }
+      },
+      "Shift-Tab": "indentLess",
+      "Ctrl-Enter": runCurrentCode,
+      "Cmd-Enter": runCurrentCode,
+    },
+  });
+
+  smartEditor.getWrapperElement().classList.add("smart-code-editor");
+  smartEditor.getInputField().setAttribute("aria-label", "Python 智能代码编辑器");
+  smartEditor.on("change", queueEditorSave);
+
+  if (persistChoice) saveEditorMode("smart");
+  renderEditorModeToggle();
+
+  requestAnimationFrame(() => {
+    smartEditor?.refresh();
+    if (focus) smartEditor?.focus();
+  });
+
+  return true;
+}
+
+function disableSmartEditor({ persistChoice = true, focus = true } = {}) {
+  if (!smartEditor) return;
+
+  const value = smartEditor.getValue();
+  smartEditor.toTextArea();
+  smartEditor = null;
+  els.codeEditor.value = value;
+
+  if (persistChoice) saveEditorMode("basic");
+  renderEditorModeToggle();
+  if (focus) els.codeEditor.focus();
 }
 
 function saveState() {
@@ -851,7 +960,7 @@ function renderLesson() {
   els.solutionPanel.hidden = true;
   els.solutionBtn.textContent = "查看参考答案";
   els.solutionCode.textContent = isAcm ? challenge.acmSolution : challenge.coreSolution;
-  els.codeEditor.value = state.code[key] ?? challenge.starters[state.stageIndex];
+  setEditorValue(state.code[key] ?? challenge.starters[state.stageIndex]);
   els.editorFilename.textContent = isAcm ? "main.py" : `${challenge.id}.py`;
   els.sampleCard.hidden = !isAcm;
   els.sampleInput.textContent = challenge.sampleInput;
@@ -881,7 +990,7 @@ function render() {
 }
 
 function persistEditor() {
-  state.code[codeKey()] = els.codeEditor.value;
+  state.code[codeKey()] = getEditorValue();
   saveState();
 }
 
@@ -973,7 +1082,7 @@ _result
 
 async function runCurrentCode() {
   const challenge = currentChallenge();
-  const code = els.codeEditor.value;
+  const code = getEditorValue();
   const isAcm = state.stageIndex === STAGES.length - 1;
 
   persistEditor();
@@ -1012,10 +1121,7 @@ async function runCurrentCode() {
   }
 }
 
-els.codeEditor.addEventListener("input", () => {
-  clearTimeout(saveTimer);
-  saveTimer = setTimeout(persistEditor, 300);
-});
+els.codeEditor.addEventListener("input", queueEditorSave);
 
 els.codeEditor.addEventListener("keydown", (event) => {
   if (event.key === "Tab") {
@@ -1033,6 +1139,14 @@ els.codeEditor.addEventListener("keydown", (event) => {
 
 els.runBtn.addEventListener("click", runCurrentCode);
 
+els.editorModeBtn.addEventListener("click", () => {
+  if (smartEditor) {
+    disableSmartEditor();
+  } else {
+    enableSmartEditor();
+  }
+});
+
 els.themeToggleBtn.addEventListener("click", () => {
   const nextTheme = document.documentElement.dataset.theme === "light" ? "dark" : "light";
   document.documentElement.dataset.theme = nextTheme;
@@ -1042,6 +1156,7 @@ els.themeToggleBtn.addEventListener("click", () => {
     // Storage may be unavailable; the current page can still change theme.
   }
   renderThemeToggle();
+  smartEditor?.refresh();
 });
 
 els.hintBtn.addEventListener("click", () => {
@@ -1062,8 +1177,8 @@ els.solutionBtn.addEventListener("click", () => {
 els.resetCodeBtn.addEventListener("click", () => {
   const challenge = currentChallenge();
   if (!window.confirm("恢复当前关卡的初始模板？你写的代码会被替换。")) return;
-  els.codeEditor.value = challenge.starters[state.stageIndex];
-  state.code[codeKey()] = els.codeEditor.value;
+  setEditorValue(challenge.starters[state.stageIndex]);
+  state.code[codeKey()] = getEditorValue();
   saveState();
   els.consoleState.textContent = "等待运行";
   els.consoleState.className = "";
@@ -1174,4 +1289,15 @@ function registerWebMcpTools() {
 
 render();
 renderThemeToggle();
+let initialEditorMode = "basic";
+try {
+  initialEditorMode = localStorage.getItem(EDITOR_MODE_KEY) === "smart" ? "smart" : "basic";
+} catch {
+  // Use the default exam-like editor when storage is unavailable.
+}
+if (initialEditorMode === "smart") {
+  enableSmartEditor({ persistChoice: false, focus: false });
+} else {
+  renderEditorModeToggle();
+}
 registerWebMcpTools();

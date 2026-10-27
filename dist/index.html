@@ -16,8 +16,14 @@
         document.documentElement.dataset.theme = "dark";
       }
     </script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.min.css" />
     <link rel="stylesheet" href="./styles.css" />
     <script defer src="https://cdn.jsdelivr.net/pyodide/v314.0.6/full/pyodide.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/mode/python/python.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/edit/closebrackets.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/edit/matchbrackets.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/selection/active-line.min.js"></script>
     <script defer src="./app.js"></script>
   </head>
   <body>
@@ -131,6 +137,16 @@
                 <strong id="editorFilename">solution.py</strong>
               </div>
               <div class="editor-actions">
+                <button
+                  class="ghost-button compact editor-mode-button"
+                  id="editorModeBtn"
+                  type="button"
+                  aria-pressed="false"
+                  title="开启语法高亮、自动缩进和括号补全"
+                >
+                  <span id="editorModeIcon" aria-hidden="true">✦</span>
+                  <span id="editorModeText">智能编辑</span>
+                </button>
                 <button class="ghost-button compact" id="resetCodeBtn" type="button">恢复模板</button>
                 <button class="run-button" id="runBtn" type="button">
                   <span aria-hidden="true">▶</span>
@@ -165,7 +181,7 @@
 
         <footer class="footer-note">
           <p>进度和代码只保存在当前浏览器，不需要登录。</p>
-          <a href="https://github.com/" target="_blank" rel="noreferrer">准备发布到 GitHub</a>
+          <a href="https://github.com/yxena9276/ai-algorithm-practice" target="_blank" rel="noreferrer">在 GitHub 查看项目</a>
         </footer>
       </main>
     </div>

@@ -32,6 +32,18 @@
   --tab-text: #718096;
   --run-text: #05231f;
   --editor-grid: rgba(98, 230, 211, 0.035);
+  --editor-gutter: #0d131e;
+  --editor-selection: rgba(98, 230, 211, 0.2);
+  --editor-active-line: rgba(98, 230, 211, 0.055);
+  --syntax-keyword: #c792ea;
+  --syntax-name: #82aaff;
+  --syntax-string: #c3e88d;
+  --syntax-number: #f78c6c;
+  --syntax-comment: #7f8c9f;
+  --syntax-builtin: #ffcb6b;
+  --syntax-operator: #89ddff;
+  --syntax-def: #ffcb6b;
+  --syntax-variable-2: #f07178;
   --hint-bg: rgba(255, 203, 107, 0.06);
   --hint-border: rgba(255, 203, 107, 0.24);
   --active-border: rgba(98, 230, 211, 0.3);
@@ -78,6 +90,18 @@
   --tab-text: #607083;
   --run-text: #ffffff;
   --editor-grid: rgba(8, 124, 121, 0.035);
+  --editor-gutter: #f3f7fa;
+  --editor-selection: rgba(8, 124, 121, 0.18);
+  --editor-active-line: rgba(8, 124, 121, 0.065);
+  --syntax-keyword: #6d28d9;
+  --syntax-name: #075985;
+  --syntax-string: #287a2c;
+  --syntax-number: #c2410c;
+  --syntax-comment: #65758b;
+  --syntax-builtin: #8b5e00;
+  --syntax-operator: #006d77;
+  --syntax-def: #9a3412;
+  --syntax-variable-2: #b42318;
   --hint-bg: #fff7e7;
   --hint-border: #e7d3a6;
   --active-border: rgba(8, 124, 121, 0.35);
@@ -791,6 +815,15 @@ textarea:focus-visible {
   gap: 4px;
 }
 
+.editor-mode-button {
+  white-space: nowrap;
+}
+
+.editor-mode-button[aria-pressed="true"] {
+  background: var(--cyan-soft);
+  color: var(--cyan);
+}
+
 .code-editor {
   width: 100%;
   min-height: 380px;
@@ -806,6 +839,108 @@ textarea:focus-visible {
   font-size: 0.9rem;
   line-height: 1.65;
   tab-size: 4;
+}
+
+.editor-card > .CodeMirror {
+  width: 100%;
+  min-height: 380px;
+  height: 100%;
+  background:
+    linear-gradient(90deg, var(--editor-grid) 1px, transparent 1px) 0 0 / 4ch 100%,
+    var(--editor-bg);
+  color: var(--code-text);
+  font-family: var(--mono);
+  font-size: 0.9rem;
+  line-height: 1.65;
+}
+
+.editor-card > .CodeMirror.CodeMirror-focused {
+  outline: 3px solid rgba(98, 230, 211, 0.38);
+  outline-offset: -3px;
+}
+
+.editor-card .CodeMirror-scroll {
+  min-height: 380px;
+}
+
+.editor-card .CodeMirror-lines {
+  padding: 18px 0;
+}
+
+.editor-card .CodeMirror pre.CodeMirror-line,
+.editor-card .CodeMirror pre.CodeMirror-line-like {
+  padding: 0 20px 0 10px;
+}
+
+.editor-card .CodeMirror-gutters {
+  border-right: 1px solid var(--line-soft);
+  background: var(--editor-gutter);
+}
+
+.editor-card .CodeMirror-linenumber {
+  color: var(--secondary-text);
+}
+
+.editor-card .CodeMirror-cursor {
+  border-left-color: var(--cyan);
+}
+
+.editor-card .CodeMirror-selected,
+.editor-card .CodeMirror-focused .CodeMirror-selected {
+  background: var(--editor-selection);
+}
+
+.editor-card .CodeMirror-activeline-background {
+  background: var(--editor-active-line);
+}
+
+.cm-s-algo .cm-keyword,
+.cm-s-algo .cm-atom,
+.cm-s-algo .cm-meta {
+  color: var(--syntax-keyword);
+}
+
+.cm-s-algo .cm-def {
+  color: var(--syntax-def);
+}
+
+.cm-s-algo .cm-variable,
+.cm-s-algo .cm-property {
+  color: var(--syntax-name);
+}
+
+.cm-s-algo .cm-variable-2,
+.cm-s-algo .cm-variable-3 {
+  color: var(--syntax-variable-2);
+}
+
+.cm-s-algo .cm-builtin,
+.cm-s-algo .cm-qualifier {
+  color: var(--syntax-builtin);
+}
+
+.cm-s-algo .cm-string,
+.cm-s-algo .cm-string-2 {
+  color: var(--syntax-string);
+}
+
+.cm-s-algo .cm-number {
+  color: var(--syntax-number);
+}
+
+.cm-s-algo .cm-operator {
+  color: var(--syntax-operator);
+}
+
+.cm-s-algo .cm-comment {
+  color: var(--syntax-comment);
+  font-style: italic;
+}
+
+.cm-s-algo .CodeMirror-matchingbracket {
+  color: var(--text) !important;
+  background: var(--cyan-soft);
+  border-bottom: 1px solid var(--cyan);
 }
 
 .console {
@@ -1015,6 +1150,15 @@ textarea:focus-visible {
 
   .code-editor {
     min-height: 330px;
+    font-size: 0.875rem;
+  }
+
+  .editor-card > .CodeMirror,
+  .editor-card .CodeMirror-scroll {
+    min-height: 330px;
+  }
+
+  .editor-card > .CodeMirror {
     font-size: 0.875rem;
   }
 }
