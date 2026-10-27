@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="用逐步撤掉提示的方法，练习 K-Means、KNN、分类指标、Softmax 和 Attention 的 Python 与 ACM 写法。"
+    />
+    <title>Algo梯 · AI 算法手写训练</title>
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <script>
+      try {
+        document.documentElement.dataset.theme = localStorage.getItem("algo-stairs-theme") === "light" ? "light" : "dark";
+      } catch {
+        document.documentElement.dataset.theme = "dark";
+      }
+    </script>
+    <link rel="stylesheet" href="./styles.css" />
+    <script defer src="https://cdn.jsdelivr.net/pyodide/v314.0.6/full/pyodide.js"></script>
+    <script defer src="./app.js"></script>
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="#" aria-label="返回训练首页">
+          <span class="brand-mark" aria-hidden="true">A</span>
+          <span>
+            <strong>Algo梯</strong>
+            <small>AI CODING DRILLS</small>
+          </span>
+        </a>
+
+        <div class="topbar-progress" aria-label="总学习进度">
+          <div>
+            <span>今日进度</span>
+            <strong id="overallProgressText">0 / 20</strong>
+          </div>
+          <div class="progress-track" aria-hidden="true">
+            <span id="overallProgressBar"></span>
+          </div>
+        </div>
+
+        <div class="topbar-actions">
+          <button class="icon-button theme-button" id="themeToggleBtn" type="button" aria-pressed="false">
+            <span id="themeToggleIcon" aria-hidden="true">☀</span>
+            <span id="themeToggleText">浅色模式</span>
+          </button>
+          <button class="icon-button reset-button" id="resetProgressBtn" type="button" title="清空本机进度">
+            重置进度
+          </button>
+        </div>
+      </header>
+
+      <aside class="sidebar">
+        <div class="sidebar-copy">
+          <span class="eyebrow">训练路线</span>
+          <h1>从看懂，到独立写出</h1>
+          <p>每一题分成四级，提示会逐步撤掉。先完成当前台阶，再进入下一关。</p>
+        </div>
+
+        <nav id="topicNav" class="topic-nav" aria-label="算法主题"></nav>
+
+        <div class="sidebar-tip">
+          <span>建议</span>
+          <p>卡住时先点“给我一点提示”，不要马上看完整答案。</p>
+        </div>
+      </aside>
+
+      <main class="main-content">
+        <section class="lesson-header" aria-labelledby="lessonTitle">
+          <div>
+            <div class="lesson-kicker">
+              <span id="lessonIndex">01</span>
+              <span id="lessonCategory">无监督学习</span>
+            </div>
+            <h2 id="lessonTitle">K-Means</h2>
+            <p id="lessonSummary"></p>
+          </div>
+          <div class="lesson-stats">
+            <span id="lessonComplexity"></span>
+            <span id="pythonStatus" class="runtime-status">Python 按需加载</span>
+          </div>
+        </section>
+
+        <section class="stage-section" aria-label="练习难度">
+          <div class="stage-heading">
+            <div>
+              <span class="eyebrow">当前台阶</span>
+              <strong id="stageTitle">带注释模板</strong>
+            </div>
+            <button class="text-button" id="nextStageBtn" type="button">下一关 →</button>
+          </div>
+          <div id="stageTabs" class="stage-tabs" role="tablist"></div>
+        </section>
+
+        <section class="workbench">
+          <article class="brief-card">
+            <div class="card-heading">
+              <span class="eyebrow">先想清楚</span>
+              <span id="attemptBadge" class="attempt-badge">尚未通过</span>
+            </div>
+            <h3 id="promptTitle"></h3>
+            <p id="promptText"></p>
+
+            <ol id="stepList" class="step-list"></ol>
+
+            <div class="hint-box" id="hintBox" hidden>
+              <span>提示</span>
+              <p id="hintText"></p>
+            </div>
+
+            <div class="brief-actions">
+              <button class="secondary-button" id="hintBtn" type="button">给我一点提示</button>
+              <button class="ghost-button" id="solutionBtn" type="button">查看参考答案</button>
+            </div>
+
+            <div class="solution-panel" id="solutionPanel" hidden>
+              <div>
+                <strong>参考答案</strong>
+                <span>看完后关掉，再自己写一次</span>
+              </div>
+              <pre><code id="solutionCode"></code></pre>
+            </div>
+          </article>
+
+          <article class="editor-card">
+            <div class="editor-toolbar">
+              <div class="editor-file">
+                <span aria-hidden="true">●</span>
+                <strong id="editorFilename">solution.py</strong>
+              </div>
+              <div class="editor-actions">
+                <button class="ghost-button compact" id="resetCodeBtn" type="button">恢复模板</button>
+                <button class="run-button" id="runBtn" type="button">
+                  <span aria-hidden="true">▶</span>
+                  运行测试
+                </button>
+              </div>
+            </div>
+
+            <label class="sr-only" for="codeEditor">Python 代码编辑器</label>
+            <textarea id="codeEditor" class="code-editor" spellcheck="false"></textarea>
+
+            <div class="console" aria-live="polite">
+              <div class="console-heading">
+                <strong>测试结果</strong>
+                <span id="consoleState">等待运行</span>
+              </div>
+              <pre id="consoleOutput">点击“运行测试”，浏览器会在本地执行你的 Python 代码。</pre>
+            </div>
+          </article>
+        </section>
+
+        <section class="sample-card" id="sampleCard" hidden>
+          <div>
+            <span class="eyebrow">ACM 输入</span>
+            <pre id="sampleInput"></pre>
+          </div>
+          <div>
+            <span class="eyebrow">预期输出</span>
+            <pre id="sampleOutput"></pre>
+          </div>
+        </section>
+
+        <footer class="footer-note">
+          <p>进度和代码只保存在当前浏览器，不需要登录。</p>
+          <a href="https://github.com/" target="_blank" rel="noreferrer">准备发布到 GitHub</a>
+        </footer>
+      </main>
+    </div>
+  </body>
+</html>
